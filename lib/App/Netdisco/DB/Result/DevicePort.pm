@@ -37,6 +37,8 @@ __PACKAGE__->add_columns(
   { data_type => "text", is_nullable => 1 },
   "speed",
   { data_type => "text", is_nullable => 1 },
+  "speed_admin",
+  { data_type => "text", is_nullable => 1 },
   "name",
   { data_type => "text", is_nullable => 1 },
   "mac",
@@ -250,24 +252,13 @@ The JOIN is of type "LEFT" in case there isn't any such node.
 
 =cut
 
-__PACKAGE__->belongs_to( last_node => 'App::Netdisco::DB::Result::Node',
-  sub {
-      my $args = shift;
-      return {
-          "$args->{foreign_alias}.mac" => { '=' =>
-             $args->{self_resultsource}->schema->resultset('Node')->search({
-               switch => { -ident => "$args->{self_alias}.ip"},
-               port   => { -ident => "$args->{self_alias}.port"}
-             },{
-               rows => 1,
-               order_by => { -desc => ['time_last'] },
-               columns => 'mac',
-               alias => 'lastnodesub'
-             })->as_query
-          }
-      };
-  },
-  { join_type => 'LEFT' },
+__PACKAGE__->belongs_to(
+    last_node => 'App::Netdisco::DB::Result::Virtual::LastNode', {
+      'foreign.switch' => 'self.ip',
+      'foreign.port'   => 'self.port',
+    }, {
+      join_type => 'LEFT',
+    }
 );
 
 =head2 vlans
